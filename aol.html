@@ -1,0 +1,127 @@
+<html>
+<head>
+<title>Rebecca Huang's movie test </title>
+
+	<script type="text/javascript"  src="main.js"></script>
+  	<link rel="stylesheet" type="text/css" href="main.css"> 
+
+</head>
+<script>
+  var isIE8 = window.XDomainRequest ? true : false;
+  var httpRequest = createCrossDomainRequest();
+  var category = new Object(); // or just {}
+  var page=1;
+  var hasMoreContent= true;
+  var maxContentPerPage = 25;
+
+  window.onscroll = function() {infinitescroll()};
+
+  function createCrossDomainRequest(handler) {
+    var request;
+    if (isIE8) {
+      request = new window.XDomainRequest();
+      }
+      else {
+        request = new XMLHttpRequest();
+      }
+    return request;
+  }
+
+function newSearch(){
+	page = 1;
+	category = new Object();
+   	clearEle(document.getElementById("listDiv"));
+	retrieveSearch();
+}
+
+function retrieveSearch() {
+	var str = document.getElementById("searchTxt").value;
+	var url = "http://api.5min.com/search/" + str + "/videos.json?page=" + page;
+    if (httpRequest) {
+      if(isIE8) {
+        httpRequest.onload = outputResult;
+        httpRequest.open("GET", url, true);
+        httpRequest.send();
+      }
+      else {
+        httpRequest.open('GET', url, true);
+        httpRequest.onreadystatechange = handler;
+        httpRequest.send();
+      }
+    }
+    else {
+    	alert("ops, no http request");
+    }
+  }
+
+  function handler(evtXHR) {
+    if (httpRequest.readyState == 4)
+    {
+      if (httpRequest.status == 200) {
+          outputResult();
+      }
+      else {
+        alert("ops, httpRequest.status(" + httpRequest.status + "): httpRequest Errors Occured");
+      }
+    }
+  }
+
+  function outputResult() {
+    var response = httpRequest.responseText;       
+    var movies = JSON.parse(response);
+    if(movies.items.length > maxContentPerPage){
+    	hasMoreContent = false;
+    }
+
+    for(var i in movies.items) {
+		 var result =  movies.items[i];
+
+		 buildCategoryList(result);		
+
+		 buildResultItem(result);
+
+	 } // end for
+    
+	 buildCategoryNav();
+  }
+  
+
+var infinitescroll = function(){
+	var height = Math.max( document.documentElement.clientHeight, document.documentElement.scrollHeight, document.documentElement.offsetHeight);
+
+    if ((document.body.scrollTop + document.body.offsetHeight)  > (height-100)) {
+    	if(hasMoreContent){
+        	page++;
+        	retrieveSearch();
+    	}
+	}
+}
+
+
+</script>
+<body>
+
+	<div id="leftNav" class="leftnav">
+	<form id="controlsToInvoke" action="#" >
+	    <p>
+	    <input id="searchTxt" type="text" width="50" value="obama" onchange="newSearch()" ></input>
+	    </p>
+	    <div id="categoryDiv"></div>
+	</form>
+	
+	</div>
+
+    <div id="listDiv" class="section">
+    </div>
+<div id="overlay" onclick="displayDetail(false)">
+	<p id="title"> </p>
+    <div>       
+     	<div id="desc"></div>    	
+		<iframe id="videoFrame" width="420" height="315"></iframe>          
+     </div>
+</div>
+
+
+</body>
+
+</html>
